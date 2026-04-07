@@ -3,7 +3,6 @@
 Используют fakeredis и моки Celery, не требуют реальных сервисов.
 """
 import pytest
-from unittest.mock import AsyncMock, patch
 from jose import jwt
 from datetime import datetime, timedelta, timezone
 
