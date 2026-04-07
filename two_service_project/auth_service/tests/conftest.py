@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient, ASGITransport
 
 from app.db.base import Base
-from app.db.session import AsyncSessionLocal
 from app.main import app
 from app.api import deps
 
