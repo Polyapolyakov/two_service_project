@@ -16,7 +16,6 @@ class TestOpenRouterClient:
     @pytest.mark.asyncio
     async def test_ask_successful_response(self):
         """Тест успешного ответа от OpenRouter."""
-        # Настраиваем мок роут
         expected_answer = "Привет! Это тестовый ответ от LLM."
         
         mock_response = {
@@ -29,14 +28,11 @@ class TestOpenRouterClient:
             ]
         }
         
-        # Поднимаем мок-роут
-        with respx.mock(
-            base_url=settings.OPENROUTER_BASE_URL,
-            assert_all_called=False
-        ) as respx_mock:
-            respx_mock.post("/chat/completions").mock(
-                return_value=Response(200, json=mock_response)
-            )
+        # Используем respx.mock правильно
+        with respx.mock(base_url=settings.OPENROUTER_BASE_URL) as respx_mock:
+            # Создаем мок для POST запроса
+            mock_route = respx_mock.post("/chat/completions")
+            mock_route.mock(return_value=Response(200, json=mock_response))
             
             client = OpenRouterClient()
             messages = [{"role": "user", "content": "Привет!"}]
@@ -45,15 +41,14 @@ class TestOpenRouterClient:
             
             assert result == expected_answer
             # Проверяем, что запрос был сделан
-            assert respx_mock["/chat/completions"].called
+            assert mock_route.called
     
     @pytest.mark.asyncio
     async def test_ask_handles_http_error(self):
         """Тест обработки HTTP ошибки."""
         with respx.mock(base_url=settings.OPENROUTER_BASE_URL) as respx_mock:
-            respx_mock.post("/chat/completions").mock(
-                return_value=Response(401, json={"error": "Unauthorized"})
-            )
+            mock_route = respx_mock.post("/chat/completions")
+            mock_route.mock(return_value=Response(401, json={"error": "Unauthorized"}))
             
             client = OpenRouterClient()
             messages = [{"role": "user", "content": "Привет!"}]
@@ -67,7 +62,8 @@ class TestOpenRouterClient:
     async def test_ask_handles_network_error(self):
         """Тест обработки сетевой ошибки."""
         with respx.mock(base_url=settings.OPENROUTER_BASE_URL) as respx_mock:
-            respx_mock.post("/chat/completions").mock(side_effect=Exception("Network error"))
+            mock_route = respx_mock.post("/chat/completions")
+            mock_route.mock(side_effect=Exception("Network error"))
             
             client = OpenRouterClient()
             messages = [{"role": "user", "content": "Привет!"}]
@@ -81,9 +77,8 @@ class TestOpenRouterClient:
     async def test_ask_constructs_correct_payload(self):
         """Тест формирования правильного payload."""
         with respx.mock(base_url=settings.OPENROUTER_BASE_URL) as respx_mock:
-            respx_mock.post("/chat/completions").mock(
-                return_value=Response(200, json={"choices": [{"message": {"content": "OK"}}]})
-            )
+            mock_route = respx_mock.post("/chat/completions")
+            mock_route.mock(return_value=Response(200, json={"choices": [{"message": {"content": "OK"}}]}))
             
             client = OpenRouterClient()
             messages = [{"role": "user", "content": "Test"}]
@@ -91,7 +86,7 @@ class TestOpenRouterClient:
             await client.ask(messages, temperature=0.5)
             
             # Проверяем, что запрос содержал правильные данные
-            request = respx_mock.calls.last.request
+            request = mock_route.calls.last.request
             import json
             body = json.loads(request.content)
             
@@ -103,9 +98,8 @@ class TestOpenRouterClient:
     async def test_ask_sets_correct_headers(self):
         """Тест установки правильных заголовков."""
         with respx.mock(base_url=settings.OPENROUTER_BASE_URL) as respx_mock:
-            respx_mock.post("/chat/completions").mock(
-                return_value=Response(200, json={"choices": [{"message": {"content": "OK"}}]})
-            )
+            mock_route = respx_mock.post("/chat/completions")
+            mock_route.mock(return_value=Response(200, json={"choices": [{"message": {"content": "OK"}}]}))
             
             client = OpenRouterClient()
             messages = [{"role": "user", "content": "Test"}]
@@ -113,10 +107,11 @@ class TestOpenRouterClient:
             await client.ask(messages, temperature=0.7)
             
             # Проверяем заголовки
-            request = respx_mock.calls.last.request
+            request = mock_route.calls.last.request
             headers = request.headers
             
             assert headers["Authorization"] == f"Bearer {settings.OPENROUTER_API_KEY}"
             assert headers["Content-Type"] == "application/json"
             assert headers["HTTP-Referer"] == settings.OPENROUTER_SITE_URL
             assert headers["X-Title"] == settings.OPENROUTER_APP_NAME
+            

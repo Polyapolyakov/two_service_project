@@ -12,16 +12,23 @@ def fake_redis():
     """Фикстура для фейкового Redis (in-memory)."""
     redis = FakeRedis(decode_responses=True)
     yield redis
-    redis.flushall()
-    redis.close()
+    # Исправляем: используем asyncio.create_task для await
+    import asyncio
+    asyncio.create_task(redis.flushall())
+    asyncio.create_task(redis.close())
 
 
 @pytest.fixture
 def mock_message():
     """Фикстура для мока сообщения Telegram."""
     message = AsyncMock(spec=Message)
-    message.from_user = User(id=12345, is_bot=False, first_name="Test")
-    message.chat = Chat(id=12345, type="private")
+    
+    # Создаем объект User с правильными атрибутами
+    user = User(id=12345, is_bot=False, first_name="Test", username="testuser")
+    chat = Chat(id=12345, type="private")
+    
+    message.from_user = user
+    message.chat = chat
     message.text = ""
     message.answer = AsyncMock()
     return message
@@ -40,4 +47,4 @@ def mock_redis_dependency(fake_redis):
     """Автоматически подменяет get_redis на фейковый Redis."""
     with patch('app.bot.handlers.get_redis', return_value=fake_redis):
         yield
-        
+               

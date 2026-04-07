@@ -106,7 +106,7 @@ class TestMessageHandler:
     async def test_message_without_token(self, mock_message, fake_redis):
         """Тест: если токена нет, бот просит авторизоваться."""
         mock_message.text = "Привет!"
-        mock_message.from_user.id = 12345
+        # user_id уже есть в mock_message из фикстуры (12345)
         
         await handle_message(mock_message)
         
@@ -126,7 +126,6 @@ class TestMessageHandler:
         await fake_redis.set(key, token)
         
         mock_message.text = "Как дела?"
-        mock_message.from_user.id = 12345
         
         await handle_message(mock_message)
         
@@ -134,7 +133,7 @@ class TestMessageHandler:
         mock_celery_task.assert_called_once()
         args = mock_celery_task.call_args[1]
         assert args["prompt"] == "Как дела?"
-        assert args["user_id"] == 12345
+        assert args["user_id"] == mock_message.from_user.id
         assert args["temperature"] == 0.7
         
         # Проверяем ответ бота
@@ -152,7 +151,6 @@ class TestMessageHandler:
         await fake_redis.set(key, invalid_token)
         
         mock_message.text = "Привет!"
-        mock_message.from_user.id = 12345
         
         await handle_message(mock_message)
         
@@ -175,7 +173,6 @@ class TestMessageHandler:
         await fake_redis.set(key, expired_token)
         
         mock_message.text = "Привет!"
-        mock_message.from_user.id = 12345
         
         await handle_message(mock_message)
         
