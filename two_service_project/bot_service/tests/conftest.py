@@ -1,19 +1,17 @@
 """
 Общие фикстуры для всех тестов Bot Service.
-Здесь настраивается мокирование Redis и других зависимостей.
 """
 import pytest
 from unittest.mock import AsyncMock, patch
 from fakeredis.aioredis import FakeRedis
 from aiogram.types import Message, User, Chat
 
-# Глобальная настройка для fakeredis
+
 @pytest.fixture
 def fake_redis():
     """Фикстура для фейкового Redis (in-memory)."""
     redis = FakeRedis(decode_responses=True)
     yield redis
-    # Очистка после тестов
     redis.flushall()
     redis.close()
 
@@ -37,11 +35,9 @@ def mock_celery_task():
         yield mock_delay
 
 
-# Автоматическое мокирование get_redis для всех тестов
 @pytest.fixture(autouse=True)
 def mock_redis_dependency(fake_redis):
-    """
-    Автоматически подменяет get_redis на фейковый Redis для всех тестов.
-    """
+    """Автоматически подменяет get_redis на фейковый Redis."""
     with patch('app.bot.handlers.get_redis', return_value=fake_redis):
         yield
+        

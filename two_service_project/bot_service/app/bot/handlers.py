@@ -58,8 +58,12 @@ async def cmd_token(message: Message):
     )
 
 
-@router.message(~Command("start") & ~Command("token"))
+@router.message()
 async def handle_message(message: Message):
+    # Проверяем, что это не команда (опционально)
+    if message.text and message.text.startswith('/'):
+        return
+    
     # Проверяем наличие токена в Redis
     redis = await get_redis()
     key = f"tg_token:{message.from_user.id}"

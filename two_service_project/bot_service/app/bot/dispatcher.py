@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from app.core.config import settings
-from app.bot.handlers import start, token, message
+from app.bot.handlers import router
 
 # Создаем бота
 bot = Bot(
@@ -9,10 +9,6 @@ bot = Bot(
     parse_mode=ParseMode.HTML
 )
 
-# Создаем диспетчер
+# Создаем диспетчер и подключаем роутер
 dp = Dispatcher()
-
-# Регистрируем роутеры
-dp.include_router(start.router)
-dp.include_router(token.router)
-dp.include_router(message.router)
+dp.include_router(router)
