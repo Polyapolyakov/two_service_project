@@ -8,14 +8,13 @@ from aiogram.types import Message, User, Chat
 
 
 @pytest.fixture
-def fake_redis():
+async def fake_redis():
     """Фикстура для фейкового Redis (in-memory)."""
     redis = FakeRedis(decode_responses=True)
     yield redis
-    # Исправляем: используем asyncio.create_task для await
-    import asyncio
-    asyncio.create_task(redis.flushall())
-    asyncio.create_task(redis.close())
+    # Очистка после тестов - используем await напрямую
+    await redis.flushall()
+    await redis.close()
 
 
 @pytest.fixture
@@ -47,4 +46,4 @@ def mock_redis_dependency(fake_redis):
     """Автоматически подменяет get_redis на фейковый Redis."""
     with patch('app.bot.handlers.get_redis', return_value=fake_redis):
         yield
-               
+            

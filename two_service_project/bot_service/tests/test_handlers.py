@@ -106,7 +106,6 @@ class TestMessageHandler:
     async def test_message_without_token(self, mock_message, fake_redis):
         """Тест: если токена нет, бот просит авторизоваться."""
         mock_message.text = "Привет!"
-        # user_id уже есть в mock_message из фикстуры (12345)
         
         await handle_message(mock_message)
         
@@ -179,3 +178,4 @@ class TestMessageHandler:
         mock_celery_task.assert_not_called()
         mock_message.answer.assert_called_once()
         assert "недействителен" in mock_message.answer.call_args[0][0]
+        
