@@ -26,32 +26,42 @@ async def cmd_start(message: Message):
 @router.message(Command("token"))
 async def cmd_token(message: Message):
     """Обработчик команды /token для сохранения JWT."""
+    # ДОБАВЬТЕ ЭТУ СТРОКУ ДЛЯ ОТЛАДКИ
+    print(f"DEBUG: Получена команда /token от {message.from_user.id}")
+    print(f"DEBUG: Текст сообщения: {message.text}")
+    
     parts = message.text.split()
     if len(parts) != 2:
+        print(f"DEBUG: Неверный формат - {len(parts)} частей")
         await message.answer(
-            "Пожалуйста, укажите токен.\n"
+            "❌ Пожалуйста, укажите токен.\n"
             "Пример: /token eyJhbGciOiJIUzI1NiIs..."
         )
         return
     
     token = parts[1].strip()
+    print(f"DEBUG: Токен получен, длина: {len(token)}")
     
     try:
         payload = decode_and_validate(token)
+        print(f"DEBUG: Токен валиден, sub={payload.get('sub')}")
         user_id = payload.get("sub")
         if not user_id:
-            await message.answer("Невалидный токен: отсутствует поле sub")
+            print(f"DEBUG: Отсутствует sub")
+            await message.answer("❌ Невалидный токен: отсутствует поле sub")
             return
     except ValueError as e:
-        await message.answer(f"Ошибка валидации токена: {str(e)}")
+        print(f"DEBUG: Ошибка валидации: {str(e)}")
+        await message.answer(f"❌ Ошибка валидации токена: {str(e)}")
         return
     
     redis = await get_redis()
     key = f"tg_token:{message.from_user.id}"
     await redis.set(key, token, ex=3600 * 24)
+    print(f"DEBUG: Токен сохранен в Redis по ключу {key}")
     
     await message.answer(
-        "Токен успешно сохранен!\n\n"
+        "✅ Токен успешно сохранен!\n\n"
         "Теперь вы можете отправлять мне любые сообщения, "
         "и я буду отвечать с помощью LLM."
     )
