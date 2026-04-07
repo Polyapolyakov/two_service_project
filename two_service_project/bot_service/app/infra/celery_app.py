@@ -5,6 +5,7 @@ celery_app = Celery(
     "bot_service",
     broker=settings.RABBITMQ_URL,
     backend=settings.REDIS_URL,
+    include=['app.tasks.llm_tasks']
 )
 
 celery_app.conf.update(
@@ -18,8 +19,3 @@ celery_app.conf.update(
     task_soft_time_limit=25 * 60,
     result_expires=3600,
 )
-
-# Явный импорт задачи (самый надежный способ)
-from app.tasks.llm_tasks import llm_request
-celery_app.register_task(llm_request)
-
